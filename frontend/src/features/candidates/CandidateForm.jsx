@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import API from '../../services/api';
+import API from "../../api";
 
 export default function CandidateForm({ initialData = null, onSuccess }) {
   const [formData, setFormData] = useState({

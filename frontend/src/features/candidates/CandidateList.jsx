@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import API from '../../services/api';
+import API from "../../api";
 
 export default function CandidateList() {
   const [candidates, setCandidates] = useState([]);

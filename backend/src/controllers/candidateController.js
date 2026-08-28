@@ -1,17 +1,15 @@
-
 const Candidate = require('../models/candidateModel');
 const User = require('../models/userModel');
 
 
 const createCandidate = async (req, res) => {
   try {
-    const { phone, location, experience, skills, education, resumeUrl, status, userId } = req.body;
+    // 1. Wahi fields lo jo Schema mein hain
+    const { fullName, email, phone, experienceYears, skills, resumeUrl, status, userId } = req.body;
 
-   
     const targetUserId = (req.user.role === 'ADMIN' || req.user.role === 'RECRUITER') && userId
       ? userId
       : req.user._id;
-
 
     const existingCandidate = await Candidate.findOne({ user: targetUserId });
     if (existingCandidate) {
@@ -21,20 +19,21 @@ const createCandidate = async (req, res) => {
       });
     }
 
-    
-    const formattedSkills = Array.isArray(skills)
-      ? skills.map(s => s.trim())
-      : skills.split(',').map(s => s.trim());
+    // 2. Skills format karna
+    const formattedSkills = skills 
+      ? (Array.isArray(skills) ? skills.map(s => s.trim()) : skills.split(',').map(s => s.trim()))
+      : [];
 
+    // 3. Database mein save karna (Schema ke strict rules ke hisaab se)
     const candidate = await Candidate.create({
       user: targetUserId,
+      fullName,               // Added
+      email,                  // Added
       phone,
-      location: location.toLowerCase().trim(),
-      experience: Number(experience),
+      experienceYears: Number(experienceYears), // Fixed field name
       skills: formattedSkills,
-      education,
-      resumeUrl,
-      status: status ? status.toUpperCase() : 'APPLIED',
+      resumeUrl: resumeUrl || '',
+      status: status ? status.toUpperCase() : 'PENDING', // Fixed Enum ('APPLIED' se 'PENDING' kiya)
     });
 
     const populatedCandidate = await candidate.populate('user', 'username email role');
