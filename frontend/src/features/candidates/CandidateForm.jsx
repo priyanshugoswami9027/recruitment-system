@@ -55,7 +55,7 @@ export default function CandidateForm({ initialData = null, onSuccess }) {
         data.append('resume', resume);
       }
 
-      const endpoint = initialData ? `/candidates/${initialData._id}` : '/candidates';
+      const endpoint = initialData ? `/v1/candidates/${initialData._id}` : '/v1/candidates';
       const method = initialData ? 'PUT' : 'POST';
 
       await API({

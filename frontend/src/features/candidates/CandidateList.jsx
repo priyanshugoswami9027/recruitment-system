@@ -14,21 +14,24 @@ export default function CandidateList() {
   const availableSkills = ['React', 'Node.js', 'Java', 'Spring Boot', 'MongoDB', 'Python'];
 
 
+
   const fetchCandidates = async () => {
     setLoading(true);
     try {
-      const response = await API.get('/candidates', {
+      const response = await API.get('/v1/candidates', {
         params: {
           search: searchQuery,
           skill: selectedSkill,
-          page: page,
-          limit: 6,
+          page,
         },
       });
+
       setCandidates(response.data.data || []);
       setTotalPages(response.data.totalPages || 1);
     } catch (error) {
       console.error('Failed to fetch candidates:', error);
+      setCandidates([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }

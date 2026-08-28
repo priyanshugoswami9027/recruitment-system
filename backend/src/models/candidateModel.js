@@ -14,7 +14,7 @@ const candidateSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [false, 'Email is required'],
       lowercase: true,
       trim: true,
     },

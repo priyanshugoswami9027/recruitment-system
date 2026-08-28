@@ -4,8 +4,8 @@ const User = require('../models/userModel');
 
 const createCandidate = async (req, res) => {
   try {
-    // 1. Wahi fields lo jo Schema mein hain
-    const { fullName, email, phone, experienceYears, skills, resumeUrl, status, userId } = req.body;
+    // Multer ki wajah se ab req.body undefined nahi hoga
+    const { fullName, email, phone, experienceYears, skills, status, userId, currentRole, bio } = req.body;
 
     const targetUserId = (req.user.role === 'ADMIN' || req.user.role === 'RECRUITER') && userId
       ? userId
@@ -19,21 +19,31 @@ const createCandidate = async (req, res) => {
       });
     }
 
-    // 2. Skills format karna
-    const formattedSkills = skills 
-      ? (Array.isArray(skills) ? skills.map(s => s.trim()) : skills.split(',').map(s => s.trim()))
-      : [];
+    // Skills format karna: Frontend se JSON stringify hoke aaya hai, toh yahan parse karna hoga
+    let formattedSkills = [];
+    if (skills) {
+      try {
+        formattedSkills = JSON.parse(skills);
+      } catch (e) {
+        // Fallback in case plain text aaye
+        formattedSkills = Array.isArray(skills) ? skills.map(s => s.trim()) : skills.split(',').map(s => s.trim());
+      }
+    }
 
-    // 3. Database mein save karna (Schema ke strict rules ke hisaab se)
+    // Multer se file upload hone ke baad path req.file.path mein milta hai
+    const resumePath = req.file ? req.file.path : '';
+
+    // Database mein save karna
     const candidate = await Candidate.create({
       user: targetUserId,
-      fullName,               // Added
-      email,                  // Added
+      fullName,               
+      email, // Note: Frontend form mein 'email' field nahi hai, backend isko null/undefined save karega agar required nahi hai                  
       phone,
-      experienceYears: Number(experienceYears), // Fixed field name
+      experienceYears: Number(experienceYears), 
       skills: formattedSkills,
-      resumeUrl: resumeUrl || '',
-      status: status ? status.toUpperCase() : 'PENDING', // Fixed Enum ('APPLIED' se 'PENDING' kiya)
+      resumeUrl: resumePath, // req.file se liya hua path
+      status: status ? status.toUpperCase() : 'PENDING', 
+      // Agar schema mein currentRole aur bio hain, toh unhe bhi yahan add kar lein
     });
 
     const populatedCandidate = await candidate.populate('user', 'username email role');
@@ -43,13 +53,13 @@ const createCandidate = async (req, res) => {
       data: populatedCandidate,
     });
   } catch (error) {
+    console.error(error); // Terminal mein actual error dekhne ke liye
     res.status(500).json({
       success: false,
       message: error.message || 'Server Error while creating candidate profile',
     });
   }
 };
-
 
 const getCandidates = async (req, res) => {
   try {
